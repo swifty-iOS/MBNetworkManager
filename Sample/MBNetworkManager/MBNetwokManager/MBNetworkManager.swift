@@ -114,8 +114,7 @@ private class ServiceTask: Operation {
     
     private var taskType:ServiceTaskType
     fileprivate var completionHandler:((Task,Error?) -> Void)?
-    private let session = {URLSession.init(configuration: URLSessionConfiguration.default)}()
-    
+    fileprivate var session: URLSession!
     internal var task:Task
     
     internal var _executing : Bool = false
@@ -138,6 +137,7 @@ private class ServiceTask: Operation {
         if let request = self.task.request {
             
             self.updateState(.shedule)
+            self.session = URLSession.init(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: OperationQueue.current)
             
             switch self.taskType {
             case .data: self.startDataTask(request: request)
@@ -152,7 +152,7 @@ private class ServiceTask: Operation {
     internal func startDataTask(request:URLRequest){
         
         self.session.dataTask(with: request) { (data, response, error) in
-            if let object = self.handleResponsse(object: data, response: response, error: error) {
+            if let object = self.handleResponse(object: data, response: response, error: error) {
                 self.task.response = Task.Response(urlResponse: response, data: object as! Data)
                 self.updateState(.success)
             }
@@ -161,9 +161,8 @@ private class ServiceTask: Operation {
     }
     
     internal func startDataDownloadTask(request:URLRequest){
-        
         self.session.downloadTask(with: request) { (url, response, error) in
-            if let object = self.handleResponsse(object: url, response: response, error: error) {
+            if let object = self.handleResponse(object: url, response: response, error: error) {
                 self.task.response = Task.Response(urlResponse: response, url: object as! URL)
                 self.updateState(.success)
             }
@@ -171,7 +170,13 @@ private class ServiceTask: Operation {
         
     }
     
-    internal func handleResponsse(object:Any?, response:URLResponse?, error: Error?) -> Any? {
+    internal func handleResponse(object:Any?, response:URLResponse?, error: Error?) -> Any? {
+        
+        guard self.task.customError == nil else {
+            self.task.response = Task.Response(urlResponse: nil, error: self.task.customError)
+            self.updateState(.failed)
+            return nil
+        }
         
         guard error == nil, object != nil else{
             self.task.response = Task.Response(urlResponse: response, error: error!)
@@ -211,6 +216,43 @@ private class ServiceTask: Operation {
 
 
 //-----------------------------------------------
+// ServiceTask: NSURL Session Delgate handling
+//-----------------------------------------------
+
+
+extension ServiceTask: URLSessionDelegate {
+    
+    fileprivate func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        
+        switch challenge.protectionSpace.authenticationMethod {
+            
+        case NSURLAuthenticationMethodServerTrust:
+            completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
+            
+        case NSURLAuthenticationMethodHTTPBasic,
+             NSURLAuthenticationMethodHTTPDigest,
+             NSURLAuthenticationMethodClientCertificate:
+            
+            if challenge.previousFailureCount > task.authenticationRetry {
+                task.customError = NSError(domain: "Authentication challenge retry attempt exceed!", code: Task.HTTPStatusCode.authChellengeRetry.rawValue, userInfo: nil)
+                session.invalidateAndCancel()
+                break
+            }
+            if let result = task.authenticationHandler?(challenge) {
+                completionHandler(result.0, result.1)
+            } else {
+                task.customError = NSError(domain: "Authentication challeange not handle. Use task.authentication", code: Task.HTTPStatusCode.authChellenge.rawValue, userInfo: nil)
+                session.invalidateAndCancel()
+            }
+            break
+            
+        default:
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+}
+
+//-----------------------------------------------
 // ServiceTask: KVO handling
 //-----------------------------------------------
 
@@ -245,26 +287,40 @@ extension ServiceTask {
 // Task: Task will execute in operation
 //-----------------------------------------------
 
-struct Task {
+class Task {
     
-    var identifier:String {
-        get { return self._identifier}
-    }
+    fileprivate var customError: NSError?
     private let _identifier:String = UUID().uuidString
+    fileprivate var trackStateBlock: ((Task.State) -> Void)?
+    fileprivate var authenticationHandler: ((URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?))?
     
-    private let urlString:String
+    fileprivate let urlString:String
+    var identifier:String { return self._identifier }
     
     var userInfo: Dictionary<String,AnyObject>?
-    
-    private var trackStateBlock: ((Task.State) -> Void)?
-    
     var headers: Dictionary<String,AnyObject>?
     var requestBody: Dictionary<String,AnyObject>?
     var method = Task.Method.none
     var timeout: TimeInterval = 30
-    
+    var authenticationRetry = 1
     
     var _state = Task.State.pending
+    
+    var response : Task.Response?
+    
+    init(url:String) { self.urlString = url }
+    
+    func trackState( block: @escaping (_ state:Task.State)->Void) {
+        self.trackStateBlock = block
+    }
+    
+    func authentication( block: @escaping (URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?)) {
+        self.authenticationHandler = block
+    }
+}
+
+
+extension Task {
     var state :Task.State {
         get {return self._state}
         set {
@@ -274,11 +330,9 @@ struct Task {
             }
         }
     }
-    var response : Task.Response?
-    
-    init(url:String) {
-        self.urlString = url
-    }
+}
+
+extension Task {
     
     var request:URLRequest? {
         
@@ -308,10 +362,6 @@ struct Task {
         }
         return nil
     }
-    
-    mutating func trackState( block: @escaping (_ state:Task.State)->Void) {
-        self.trackStateBlock = block
-    }
 }
 
 
@@ -330,7 +380,7 @@ extension Task {
     }
     
     enum HTTPStatusCode: Int {
-        case success = 200, unknwon = -1
+        case success = 200, unknwon = -1, authChellenge = 91, authChellengeRetry = 90
     }
 }
 
