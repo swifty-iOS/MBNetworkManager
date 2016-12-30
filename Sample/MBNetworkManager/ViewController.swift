@@ -9,17 +9,29 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
+    @IBOutlet weak var label: UILabel!
+    @IBOutlet weak var activityView: UIActivityIndicatorView!
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.activityView.startAnimating()
+        self.label.text = "Loading"
+        let gTask = Task.sampleTask()
+        MBNetworkManager.shared.add(dataTask: gTask, completion: {
+            (task, error) in
+            DispatchQueue.main.async {
+                self.activityView.stopAnimating()
+                self.label.text = "\(task.state)"
+            }
+        })
         // Do any additional setup after loading the view, typically from a nib.
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
-
+    
+    
 }
 

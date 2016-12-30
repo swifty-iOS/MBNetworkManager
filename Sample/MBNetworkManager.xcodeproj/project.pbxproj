@@ -12,7 +12,8 @@
 		1346BAA21E158A7A001B69D5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1346BAA01E158A7A001B69D5 /* Main.storyboard */; };
 		1346BAA41E158A7A001B69D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1346BAA31E158A7A001B69D5 /* Assets.xcassets */; };
 		1346BAA71E158A7A001B69D5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1346BAA51E158A7A001B69D5 /* LaunchScreen.storyboard */; };
-		13BC14201E158F8C00F84541 /* MBNetwokManager in Resources */ = {isa = PBXBuildFile; fileRef = 13BC141F1E158F8C00F84541 /* MBNetwokManager */; };
+		136EE65B1E16D412006943EB /* MBNetworkManager+Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136EE6591E16D412006943EB /* MBNetworkManager+Task.swift */; };
+		136EE65C1E16D412006943EB /* MBNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136EE65A1E16D412006943EB /* MBNetworkManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,7 +24,8 @@
 		1346BAA31E158A7A001B69D5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1346BAA61E158A7A001B69D5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1346BAA81E158A7A001B69D5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		13BC141F1E158F8C00F84541 /* MBNetwokManager */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MBNetwokManager; path = ../../MBNetwokManager; sourceTree = "<group>"; };
+		136EE6591E16D412006943EB /* MBNetworkManager+Task.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "MBNetworkManager+Task.swift"; sourceTree = "<group>"; };
+		136EE65A1E16D412006943EB /* MBNetworkManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MBNetworkManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,13 +60,22 @@
 			children = (
 				1346BA9C1E158A7A001B69D5 /* AppDelegate.swift */,
 				1346BA9E1E158A7A001B69D5 /* ViewController.swift */,
-				13BC141F1E158F8C00F84541 /* MBNetwokManager */,
+				136EE6581E16D412006943EB /* MBNetwokManager */,
 				1346BAA01E158A7A001B69D5 /* Main.storyboard */,
 				1346BAA31E158A7A001B69D5 /* Assets.xcassets */,
 				1346BAA51E158A7A001B69D5 /* LaunchScreen.storyboard */,
 				1346BAA81E158A7A001B69D5 /* Info.plist */,
 			);
 			path = MBNetworkManager;
+			sourceTree = "<group>";
+		};
+		136EE6581E16D412006943EB /* MBNetwokManager */ = {
+			isa = PBXGroup;
+			children = (
+				136EE6591E16D412006943EB /* MBNetworkManager+Task.swift */,
+				136EE65A1E16D412006943EB /* MBNetworkManager.swift */,
+			);
+			path = MBNetwokManager;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -127,7 +138,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				1346BAA71E158A7A001B69D5 /* LaunchScreen.storyboard in Resources */,
-				13BC14201E158F8C00F84541 /* MBNetwokManager in Resources */,
 				1346BAA41E158A7A001B69D5 /* Assets.xcassets in Resources */,
 				1346BAA21E158A7A001B69D5 /* Main.storyboard in Resources */,
 			);
@@ -141,7 +151,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				1346BA9F1E158A7A001B69D5 /* ViewController.swift in Sources */,
+				136EE65C1E16D412006943EB /* MBNetworkManager.swift in Sources */,
 				1346BA9D1E158A7A001B69D5 /* AppDelegate.swift in Sources */,
+				136EE65B1E16D412006943EB /* MBNetworkManager+Task.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
