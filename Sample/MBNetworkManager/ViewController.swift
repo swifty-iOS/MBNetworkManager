@@ -19,11 +19,20 @@ class ViewController: UIViewController {
         let gTask = Task.sampleTask()
         MBNetworkManager.shared.add(dataTask: gTask, completion: {
             (task, error) in
+            print(error ?? " ")
             DispatchQueue.main.async {
                 self.activityView.stopAnimating()
                 self.label.text = "\(task.state)"
             }
         })
+        gTask.authentication { challenge in
+            return (.useCredential,nil)
+        }
+        gTask.trackState { state in
+            DispatchQueue.main.async {
+                self.label.text = "\(state)"
+            }
+        }
         // Do any additional setup after loading the view, typically from a nib.
     }
     
