@@ -11,15 +11,15 @@ import UIKit
 
 
 fileprivate struct NetworkConstant {
-    static let OperationObserverKey = "operations"
-    static let QueueName = "DownloadQueue"
+    static var OperationObserverKey:String { return "operations" }
+    static var QueueName: String { return "DownloadQueue" }
 }
 //-----------------------------------------------
 // NetworkManager: Singleton class for
 // handing newtwok call
 //-----------------------------------------------
 
-class NetworkManager: NSObject {
+class MBNetworkManager: NSObject {
     
     static let shared = NetworkManager()
     let queue: OperationQueue = {
@@ -83,8 +83,8 @@ extension NetworkManager {
     }
     
     func task(withIdentifier id: String) -> Task? {
-        return (self.queue.operations.filter {(operation) -> Bool in
-            return (operation as! ServiceTask).task.identifier == id
+        return (self.queue.operations.filter {
+            return ($0 as! ServiceTask).task.identifier == id
             }.first as! ServiceTask?)?.task
     }
     
@@ -96,6 +96,10 @@ extension NetworkManager {
     
     func cancelAllTask() {
         self.queue.cancelAllOperations()
+    }
+    
+    var runningOpertaions: Int {
+        return self.queue.operationCount
     }
     
 }

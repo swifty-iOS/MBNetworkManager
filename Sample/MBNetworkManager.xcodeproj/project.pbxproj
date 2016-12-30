@@ -12,6 +12,7 @@
 		1346BAA21E158A7A001B69D5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1346BAA01E158A7A001B69D5 /* Main.storyboard */; };
 		1346BAA41E158A7A001B69D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1346BAA31E158A7A001B69D5 /* Assets.xcassets */; };
 		1346BAA71E158A7A001B69D5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1346BAA51E158A7A001B69D5 /* LaunchScreen.storyboard */; };
+		13BC14201E158F8C00F84541 /* MBNetwokManager in Resources */ = {isa = PBXBuildFile; fileRef = 13BC141F1E158F8C00F84541 /* MBNetwokManager */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		1346BAA31E158A7A001B69D5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1346BAA61E158A7A001B69D5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1346BAA81E158A7A001B69D5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		13BC141F1E158F8C00F84541 /* MBNetwokManager */ = {isa = PBXFileReference; lastKnownFileType = folder; name = MBNetwokManager; path = ../../MBNetwokManager; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +58,7 @@
 			children = (
 				1346BA9C1E158A7A001B69D5 /* AppDelegate.swift */,
 				1346BA9E1E158A7A001B69D5 /* ViewController.swift */,
+				13BC141F1E158F8C00F84541 /* MBNetwokManager */,
 				1346BAA01E158A7A001B69D5 /* Main.storyboard */,
 				1346BAA31E158A7A001B69D5 /* Assets.xcassets */,
 				1346BAA51E158A7A001B69D5 /* LaunchScreen.storyboard */,
@@ -124,6 +127,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1346BAA71E158A7A001B69D5 /* LaunchScreen.storyboard in Resources */,
+				13BC14201E158F8C00F84541 /* MBNetwokManager in Resources */,
 				1346BAA41E158A7A001B69D5 /* Assets.xcassets in Resources */,
 				1346BAA21E158A7A001B69D5 /* Main.storyboard in Resources */,
 			);
@@ -299,6 +303,7 @@
 				1346BAAD1E158A7A001B69D5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
