@@ -10,10 +10,23 @@ import UIKit
 
 class ViewController: UIViewController {
     
+    @IBOutlet weak var progressView: UIProgressView!
     @IBOutlet weak var label: UILabel!
     @IBOutlet weak var activityView: UIActivityIndicatorView!
     override func viewDidLoad() {
         super.viewDidLoad()
+    }
+    
+    @IBAction func downloadTask(_ sender: UIButton) {
+        self.dwnloadTask()
+    }
+    @IBAction func dataTask(_ sender: UIButton) {
+        self.dataTask()
+    }
+    
+    func dataTask() {
+        self.view.isUserInteractionEnabled = false
+        self.progressView.progress = 0.0
         self.activityView.startAnimating()
         self.label.text = "Loading"
         let gTask = Task.sampleTask()
@@ -21,6 +34,7 @@ class ViewController: UIViewController {
             (task, error) in
             print(error ?? " ")
             DispatchQueue.main.async {
+                self.view.isUserInteractionEnabled = true
                 self.activityView.stopAnimating()
                 self.label.text = "\(task.state)"
             }
@@ -33,8 +47,40 @@ class ViewController: UIViewController {
                 self.label.text = "\(state)"
             }
         }
-        // Do any additional setup after loading the view, typically from a nib.
     }
+    
+    func dwnloadTask() {
+        self.view.isUserInteractionEnabled = false
+        self.progressView.progress = 0.0
+        self.activityView.startAnimating()
+        self.label.text = "Loading"
+        let dTask = Task.samplePDF()
+        MBNetworkManager.shared.add(downloadTask: dTask, completion: {
+            (task, error) in
+            print(error ?? " ")
+            DispatchQueue.main.async {
+                self.view.isUserInteractionEnabled = true
+                
+                self.activityView.stopAnimating()
+                self.label.text = "\(task.state)"
+            }
+        })
+        dTask.authentication { challenge in
+            return (.useCredential,nil)
+        }
+        dTask.trackState { state in
+            DispatchQueue.main.async {
+                self.label.text = "\(state)"
+            }
+        }
+       dTask.progress { (per) in
+        DispatchQueue.main.async {
+            self.progressView.progress = Float(per/100)
+        }
+        print(per)
+        }
+    }
+    
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()

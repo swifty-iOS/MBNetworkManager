@@ -135,7 +135,6 @@ private class ServiceTask: Operation {
         }
         
         if let request = self.task.request {
-            
             self.updateState(.shedule)
             self.session = URLSession.init(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: OperationQueue.current)
             
@@ -147,30 +146,28 @@ private class ServiceTask: Operation {
             
             self.updateState(.running)
         }
+        else {
+            self.task.customError = NSError(domain: "Request not found", code: Task.StatusCode.requestNotFound.rawValue, userInfo: nil)
+            self.handleResponse(object: nil, response: nil, error: nil)
+        }
     }
     
     internal func startDataTask(request:URLRequest){
         
-        self.session.dataTask(with: request) { (data, response, error) in
-            if let object = self.handleResponse(object: data, response: response, error: error) {
-                self.task.response = Task.Response(urlResponse: response, data: object as! Data)
-                self.updateState(.success)
+        self.session.dataTask(with: request) {  [weak self] (data, response, error) in
+            if let object = self?.handleResponse(object: data, response: response, error: error) {
+                self?.task.response = Task.Response(urlResponse: response, data: object as! Data)
+                self?.updateState(.success)
             }
             }.resume()
         
     }
     
     internal func startDataDownloadTask(request:URLRequest){
-        self.session.downloadTask(with: request) { (url, response, error) in
-            if let object = self.handleResponse(object: url, response: response, error: error) {
-                self.task.response = Task.Response(urlResponse: response, url: object as! URL)
-                self.updateState(.success)
-            }
-            }.resume()
-        
+        self.session.downloadTask(with: request).resume()
     }
     
-    internal func handleResponse(object:Any?, response:URLResponse?, error: Error?) -> Any? {
+    @discardableResult internal func handleResponse(object:Any?, response:URLResponse?, error: Error?) -> Any? {
         
         guard self.task.customError == nil else {
             self.task.response = Task.Response(urlResponse: nil, error: self.task.customError)
@@ -184,7 +181,7 @@ private class ServiceTask: Operation {
             return nil
         }
         
-        guard let httpHeader = response as? HTTPURLResponse, httpHeader.statusCode == Task.HTTPStatusCode.success.rawValue else {
+        guard let httpHeader = response as? HTTPURLResponse, httpHeader.statusCode == Task.StatusCode.success.rawValue else {
             
             let error = NSError.init(domain: "Bad response from server. Check httpStatusCode of Task", code: 12, userInfo: nil) as Error?
             self.task.response = Task.Response(urlResponse: response, error: error)
@@ -222,8 +219,8 @@ private class ServiceTask: Operation {
 
 extension ServiceTask: URLSessionDelegate {
     
-    fileprivate func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        
+    internal func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        print("Challenge received for task identifier: \(self.task.identifier)")
         switch challenge.protectionSpace.authenticationMethod {
             
         case NSURLAuthenticationMethodServerTrust:
@@ -234,14 +231,14 @@ extension ServiceTask: URLSessionDelegate {
              NSURLAuthenticationMethodClientCertificate:
             
             if challenge.previousFailureCount > task.authenticationRetry {
-                task.customError = NSError(domain: "Authentication challenge retry attempt exceed!", code: Task.HTTPStatusCode.authChellengeRetry.rawValue, userInfo: nil)
+                task.customError = NSError(domain: "Authentication challenge retry attempt exceed!", code: Task.StatusCode.authChellengeRetry.rawValue, userInfo: nil)
                 session.invalidateAndCancel()
                 break
             }
             if let result = task.authenticationHandler?(challenge) {
                 completionHandler(result.0, result.1)
             } else {
-                task.customError = NSError(domain: "Authentication challeange not handle. Use task.authentication", code: Task.HTTPStatusCode.authChellenge.rawValue, userInfo: nil)
+                task.customError = NSError(domain: "Authentication challeange not handle. Use task.authentication", code: Task.StatusCode.authChellenge.rawValue, userInfo: nil)
                 session.invalidateAndCancel()
             }
             break
@@ -250,6 +247,28 @@ extension ServiceTask: URLSessionDelegate {
             completionHandler(.performDefaultHandling, nil)
         }
     }
+}
+
+extension ServiceTask: URLSessionTaskDelegate {
+    internal func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if error != nil  {
+            self.handleResponse(object: nil, response: nil, error: error)
+        }
+    }
+}
+
+extension ServiceTask: URLSessionDownloadDelegate {
+    
+    internal func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+            self.task.response = Task.Response(urlResponse: nil, url: location)
+            self.updateState(.success)
+    }
+    
+    
+    internal func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        self.task.trackProgress?(round((((Double(totalBytesWritten)/Double(totalBytesExpectedToWrite))*100))*100)/100)
+    }
+    
 }
 
 //-----------------------------------------------
@@ -293,6 +312,7 @@ class Task {
     private let _identifier:String = UUID().uuidString
     fileprivate var trackStateBlock: ((Task.State) -> Void)?
     fileprivate var authenticationHandler: ((URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?))?
+    fileprivate var trackProgress: ((Double) -> Void)?
     
     fileprivate let urlString:String
     var identifier:String { return self._identifier }
@@ -310,12 +330,16 @@ class Task {
     
     init(url:String) { self.urlString = url }
     
-    func trackState( block: @escaping (_ state:Task.State)->Void) {
+    func trackState(block: @escaping (_ state:Task.State)->Void) {
         self.trackStateBlock = block
     }
     
-    func authentication( block: @escaping (URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?)) {
+    func authentication(block: @escaping (URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?)) {
         self.authenticationHandler = block
+    }
+    
+    func progress(block: @escaping (Double) -> Void) {
+        self.trackProgress = block
     }
 }
 
@@ -379,8 +403,8 @@ extension Task {
         case pending = 1, shedule = 2, running = 3,success = 4, cancel = 5, failed = 6
     }
     
-    enum HTTPStatusCode: Int {
-        case success = 200, unknwon = -1, authChellenge = 91, authChellengeRetry = 90
+    enum StatusCode: Int {
+        case success = 200, unknwon = -1, authChellenge = 91, authChellengeRetry = 90, requestNotFound = 101
     }
 }
 

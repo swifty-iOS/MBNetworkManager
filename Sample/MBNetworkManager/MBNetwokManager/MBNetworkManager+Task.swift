@@ -11,12 +11,18 @@ import Foundation
 extension Task {
     
     
-    static func sampleTask() -> Task {
+    class func sampleTask() -> Task {
         
-        var newTask = Task(url: "https://www.google.com")
-//        newTask.method = .post
-//        newTask.headers = ["Key": "HeaderText" as AnyObject]
-//        newTask.requestBody = ["boby" : "bodyText" as AnyObject]
+        let newTask = Task(url: "https://www.google.com")
+        //        newTask.method = .post
+        //        newTask.headers = ["Key": "HeaderText" as AnyObject]
+        //        newTask.requestBody = ["boby" : "bodyText" as AnyObject]
+        newTask.timeout = 30
+        return newTask
+    }
+    
+    class func samplePDF() -> Task {
+        let newTask = Task(url: "http://www.ebooksbucket.com/uploads/itprogramming/iosappdevelopment/Core_Data_Storage_and_Management_for_iOS.pdf")
         newTask.timeout = 30
         return newTask
     }
