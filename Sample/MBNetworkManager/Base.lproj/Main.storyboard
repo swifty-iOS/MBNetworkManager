@@ -6,6 +6,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -22,32 +23,67 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="2sW-Pc-hdN">
-                                <rect key="frame" x="170" y="316" width="37" height="37"/>
+                                <rect key="frame" x="169" y="315" width="37" height="37"/>
                                 <color key="color" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                             </activityIndicatorView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="clr-dr-EAT">
-                                <rect key="frame" x="20" y="275" width="335" height="21"/>
+                                <rect key="frame" x="20" y="274" width="335" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dhT-H3-t7m">
+                                <rect key="frame" x="46" y="50" width="126.5" height="30"/>
+                                <color key="backgroundColor" red="0.1144141462" green="0.42409090789999998" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <state key="normal" title="Data">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="dataTask:" destination="BYZ-38-t0r" eventType="touchUpInside" id="vQy-dW-yya"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Zci-Bo-K2O">
+                                <rect key="frame" x="202.5" y="50" width="126.5" height="30"/>
+                                <color key="backgroundColor" red="0.1144141462" green="0.42409090789999998" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <state key="normal" title="Download">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="downloadTask:" destination="BYZ-38-t0r" eventType="touchUpInside" id="xLq-Ll-d5n"/>
+                                </connections>
+                            </button>
+                            <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="fHe-qL-H2X">
+                                <rect key="frame" x="30" y="242" width="315" height="2"/>
+                            </progressView>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstAttribute="trailing" secondItem="fHe-qL-H2X" secondAttribute="trailing" constant="30" id="3f9-iZ-y8a"/>
+                            <constraint firstItem="dhT-H3-t7m" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="30" id="7e7-C8-wGI"/>
+                            <constraint firstItem="clr-dr-EAT" firstAttribute="top" secondItem="fHe-qL-H2X" secondAttribute="bottom" constant="30" id="IXx-VC-rPu"/>
+                            <constraint firstItem="Zci-Bo-K2O" firstAttribute="leading" secondItem="dhT-H3-t7m" secondAttribute="trailing" constant="30" id="JOz-4F-Sv2"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="Zci-Bo-K2O" secondAttribute="trailing" constant="30" id="O8J-6p-YO1"/>
                             <constraint firstItem="clr-dr-EAT" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20" id="UcX-gx-W5c"/>
+                            <constraint firstItem="Zci-Bo-K2O" firstAttribute="width" secondItem="dhT-H3-t7m" secondAttribute="width" id="Wyy-r1-32d"/>
+                            <constraint firstItem="fHe-qL-H2X" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="30" id="XlO-pf-j4X"/>
+                            <constraint firstItem="Zci-Bo-K2O" firstAttribute="height" secondItem="dhT-H3-t7m" secondAttribute="height" id="ahI-Gh-F2z"/>
                             <constraint firstAttribute="trailing" secondItem="clr-dr-EAT" secondAttribute="trailing" constant="20" id="cLp-8k-7hs"/>
                             <constraint firstItem="2sW-Pc-hdN" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="fVv-3b-GMe"/>
                             <constraint firstItem="2sW-Pc-hdN" firstAttribute="top" secondItem="clr-dr-EAT" secondAttribute="bottom" constant="20" id="mfM-DS-IJJ"/>
+                            <constraint firstItem="dhT-H3-t7m" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="30" id="oGJ-UC-vld"/>
+                            <constraint firstItem="Zci-Bo-K2O" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="30" id="tAl-7e-Myl"/>
                             <constraint firstItem="2sW-Pc-hdN" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="x0y-Th-icp"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="activityView" destination="2sW-Pc-hdN" id="o7i-ZF-ofw"/>
                         <outlet property="label" destination="clr-dr-EAT" id="kTL-SL-1dc"/>
+                        <outlet property="progressView" destination="fHe-qL-H2X" id="DSN-lU-ctG"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="117.59999999999999" y="123.68815592203899"/>
         </scene>
     </scenes>
 </document>
