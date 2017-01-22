@@ -9,9 +9,8 @@
 import Foundation
 import UIKit
 
-
 fileprivate struct NetworkConstant {
-    static var OperationObserverKey:String { return "operations" }
+    static var OperationObserverKey: String { return "operations" }
     static var QueueName: String { return "DownloadQueue" }
 }
 //-----------------------------------------------
@@ -20,7 +19,7 @@ fileprivate struct NetworkConstant {
 //-----------------------------------------------
 
 class MBNetworkManager: NSObject {
-    
+
     static let shared = MBNetworkManager()
     let queue: OperationQueue = {
         var queue = OperationQueue()
@@ -28,8 +27,8 @@ class MBNetworkManager: NSObject {
         queue.maxConcurrentOperationCount = 3
         return queue
     }()
-    private var _shouldNewtwokActivity:Bool = false
-    var shouldNewtwokActivity:Bool {
+    private var _shouldNewtwokActivity: Bool = false
+    var shouldNewtwokActivity: Bool {
         get {return _shouldNewtwokActivity}
         set {
             if _shouldNewtwokActivity != newValue {
@@ -39,69 +38,69 @@ class MBNetworkManager: NSObject {
             }
         }
     }
-    private func setupObserver(){
+    private func setupObserver() {
         if self.shouldNewtwokActivity {
             self.queue.addObserver(self, forKeyPath: NetworkConstant.OperationObserverKey, options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: nil)
         } else {
             self.queue.removeObserver(self, forKeyPath: NetworkConstant.OperationObserverKey, context: nil)
         }
     }
-    
+
     override init() {
         super.init()
         self.shouldNewtwokActivity = true
     }
-    
+
     internal override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        
-        if keyPath == NetworkConstant.OperationObserverKey, (object as! OperationQueue) == self.queue {
+
+        if keyPath == NetworkConstant.OperationObserverKey, (object as? OperationQueue) == self.queue {
             self.checkForNetwrokActivity()
         } else {
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
     }
-    
-    private func checkForNetwrokActivity(){
+
+    private func checkForNetwrokActivity() {
         if self.queue.operationCount > 0 && self.shouldNewtwokActivity {
             UIApplication.shared.isNetworkActivityIndicatorVisible = true
         } else {
             UIApplication.shared.isNetworkActivityIndicatorVisible = false
         }
     }
-    
+
 }
 //-----------------------------------------------
 // ServiceTask: Methods exposed to user only
 //-----------------------------------------------
 
 extension MBNetworkManager {
-    
-    func add(downloadTask task :Task, completion:@escaping (Task,Error?) -> Void) {
+
+    func add(downloadTask task: Task, completion:@escaping (Task, Error?) -> Void) {
         let op = ServiceTask.init(task, serviceType: .download, completion: completion)
         op.queuePriority = .high
         self.queue.addOperation(op)
     }
-    
-    func task(withIdentifier id: String) -> Task? {
+
+    func task(withIdentifier: String) -> Task? {
         return (self.queue.operations.filter {
-            return ($0 as! ServiceTask).task.identifier == id
-            }.first as! ServiceTask?)?.task
+            return ($0 as? ServiceTask)?.task.identifier == withIdentifier
+            }.first as? ServiceTask)?.task
     }
-    
-    func add( dataTask task :Task, completion:@escaping (Task,Error?) -> Void) {
+
+    func add( dataTask task: Task, completion:@escaping (Task, Error?) -> Void) {
         let op = ServiceTask.init(task, serviceType: .data, completion: completion)
         op.queuePriority = .high
         self.queue.addOperation(op)
     }
-    
+
     func cancelAllTask() {
         self.queue.cancelAllOperations()
     }
-    
+
     var runningOpertaions: Int {
         return self.queue.operationCount
     }
-    
+
 }
 
 //-----------------------------------------------
@@ -111,78 +110,76 @@ private class ServiceTask: Operation {
     enum ServiceTaskType {
         case data, download, upload
     }
-    
-    private var taskType:ServiceTaskType
-    fileprivate var completionHandler:((Task,Error?) -> Void)?
+
+    private var taskType: ServiceTaskType
+    fileprivate var completionHandler: ((Task, Error?) -> Void)?
     fileprivate var session: URLSession!
-    internal var task:Task
-    
-    internal var _executing : Bool = false
-    internal var _isFinished : Bool = false
+    internal var task: Task
+
+    internal var executingLocal: Bool = false
+    internal var isFinishedLocal: Bool = false
     //internal var _isCancelled : Bool = false
-    
-    init(_ task:Task, serviceType type:ServiceTaskType, completion:@escaping (Task,Error?) -> Void) {
+
+    init(_ task: Task, serviceType type: ServiceTaskType, completion:@escaping (Task, Error?) -> Void) {
         self.task = task
         self.taskType = type
         self.completionHandler = completion
     }
-    
-    
+
     override func start() {
         if self.isCancelled {
             self.updateState(.cancel)
             return
         }
-        
+
         if let request = self.task.request {
             self.updateState(.shedule)
             self.session = URLSession.init(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: OperationQueue.current)
-            
+
             switch self.taskType {
             case .data: self.startDataTask(request: request)
             case .download: self.startDataDownloadTask(request: request)
             case .upload: self.startDataTask(request: request)
             }
-            
+
             self.updateState(.running)
-        }
-        else {
+        } else {
             self.task.customError = NSError(domain: "Request not found", code: Task.StatusCode.requestNotFound.rawValue, userInfo: nil)
             self.handleResponse(object: nil, response: nil, error: nil)
         }
     }
-    
-    internal func startDataTask(request:URLRequest){
-        
+
+    internal func startDataTask(request: URLRequest) {
+
         self.session.dataTask(with: request) {  [weak self] (data, response, error) in
             if let object = self?.handleResponse(object: data, response: response, error: error) {
-                self?.task.response = Task.Response(urlResponse: response, data: object as! Data)
+                self?.task.response = Task.Response(urlResponse: response, data: object as? Data)
                 self?.updateState(.success)
             }
             }.resume()
-        
+
     }
-    
-    internal func startDataDownloadTask(request:URLRequest){
+
+    internal func startDataDownloadTask(request: URLRequest) {
         self.session.downloadTask(with: request).resume()
     }
-    
-    @discardableResult internal func handleResponse(object:Any?, response:URLResponse?, error: Error?) -> Any? {
-        
+
+    @discardableResult internal func handleResponse(object:Any?, response: URLResponse?, error: Error?) -> Any? {
+
         guard self.task.customError == nil else {
             self.task.response = Task.Response(urlResponse: nil, error: self.task.customError)
             self.updateState(.failed)
             return nil
         }
-        
-        guard error == nil, object != nil else{
+
+        guard error == nil, object != nil else {
             self.task.response = Task.Response(urlResponse: response, error: error!)
             self.updateState(.failed)
             return nil
         }
-        
+
         guard let httpHeader = response as? HTTPURLResponse, httpHeader.statusCode == Task.StatusCode.success.rawValue else {
-            
+
             let error = NSError.init(domain: "Bad response from server. Check httpStatusCode of Task", code: 12, userInfo: nil) as Error?
             self.task.response = Task.Response(urlResponse: response, error: error)
             print("HTTP status should be 200. It is \(self.task.response?.urlResponse?.statusCode)")
@@ -191,45 +188,42 @@ private class ServiceTask: Operation {
         }
         return object
     }
-    
-    
-    internal func updateState(_ state:Task.State) {
-        
+
+    internal func updateState(_ state: Task.State) {
+
         self.task.state = state
-        
+
         // Check for completion
         if state.rawValue > Task.State.running.rawValue {
             self.isExecuting = false
             self.isFinished = true
-            self.completionHandler?(self.task,self.task.response?.error)
-            
+            self.completionHandler?(self.task, self.task.response?.error)
+
         } else if state == .running {
             self.isExecuting = true
             self.isFinished = false
         }
     }
-    
-}
 
+}
 
 //-----------------------------------------------
 // ServiceTask: NSURL Session Delgate handling
 //-----------------------------------------------
 
-
 extension ServiceTask: URLSessionDelegate {
-    
+
     internal func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         print("Challenge received for task identifier: \(self.task.identifier)")
         switch challenge.protectionSpace.authenticationMethod {
-            
+
         case NSURLAuthenticationMethodServerTrust:
             completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
-            
+
         case NSURLAuthenticationMethodHTTPBasic,
              NSURLAuthenticationMethodHTTPDigest,
              NSURLAuthenticationMethodClientCertificate:
-            
+
             if challenge.previousFailureCount > task.authenticationRetry {
                 task.customError = NSError(domain: "Authentication challenge retry attempt exceed!", code: Task.StatusCode.authChellengeRetry.rawValue, userInfo: nil)
                 session.invalidateAndCancel()
@@ -242,7 +236,7 @@ extension ServiceTask: URLSessionDelegate {
                 session.invalidateAndCancel()
             }
             break
-            
+
         default:
             completionHandler(.performDefaultHandling, nil)
         }
@@ -251,24 +245,23 @@ extension ServiceTask: URLSessionDelegate {
 
 extension ServiceTask: URLSessionTaskDelegate {
     internal func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        if error != nil  {
+        if error != nil {
             self.handleResponse(object: nil, response: nil, error: error)
         }
     }
 }
 
 extension ServiceTask: URLSessionDownloadDelegate {
-    
+
     internal func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-            self.task.response = Task.Response(urlResponse: nil, url: location)
-            self.updateState(.success)
+        self.task.response = Task.Response(urlResponse: nil, url: location)
+        self.updateState(.success)
     }
-    
-    
+
     internal func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         self.task.trackProgress?(round((((Double(totalBytesWritten)/Double(totalBytesExpectedToWrite))*100))*100)/100)
     }
-    
+
 }
 
 //-----------------------------------------------
@@ -276,30 +269,30 @@ extension ServiceTask: URLSessionDownloadDelegate {
 //-----------------------------------------------
 
 extension ServiceTask {
-    
-    override var isExecuting : Bool {
-        get { return _executing }
+
+    override var isExecuting: Bool {
+        get { return executingLocal }
         set {
             willChangeValue(forKey: "isExecuting")
-            self._executing = newValue
+            self.executingLocal = newValue
             didChangeValue(forKey: "isExecuting")
         }
     }
-    
-    override var isFinished : Bool {
-        get { return _isFinished }
+
+    override var isFinished: Bool {
+        get { return isFinishedLocal }
         set {
             willChangeValue(forKey: "isFinished")
-            _isFinished = newValue
+            isFinishedLocal = newValue
             didChangeValue(forKey: "isFinished")
         }
     }
-    
+
     fileprivate override func cancel() {
         super.cancel()
         self.updateState(.cancel)
     }
-    
+
 }
 
 //-----------------------------------------------
@@ -307,60 +300,53 @@ extension ServiceTask {
 //-----------------------------------------------
 
 class Task {
-    
+
     fileprivate var customError: NSError?
-    private let _identifier:String = UUID().uuidString
+    private let _identifier: String = UUID().uuidString
     fileprivate var trackStateBlock: ((Task.State) -> Void)?
-    fileprivate var authenticationHandler: ((URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?))?
+    fileprivate var authenticationHandler: ((URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition, URLCredential?))?
     fileprivate var trackProgress: ((Double) -> Void)?
-    
-    fileprivate let urlString:String
-    var identifier:String { return self._identifier }
-    
-    var userInfo: Dictionary<String,AnyObject>?
-    var headers: Dictionary<String,AnyObject>?
-    var requestBody: Dictionary<String,AnyObject>?
+
+    fileprivate let urlString: String
+    var identifier: String { return self._identifier }
+
+    var userInfo: [String:AnyObject]?
+    var headers: [String:AnyObject]?
+    var requestBody: [String:AnyObject]?
     var method = Task.Method.none
     var timeout: TimeInterval = 30
     var authenticationRetry = 1
-    
-    var _state = Task.State.pending
-    
-    var response : Task.Response?
-    
-    init(url:String) { self.urlString = url }
-    
-    func trackState(block: @escaping (_ state:Task.State)->Void) {
+
+    var state = Task.State.pending {
+        didSet {
+            if state != oldValue {
+                self.trackStateBlock?(state)
+            }
+        }
+    }
+
+    var response: Task.Response?
+
+    init(url: String) { self.urlString = url }
+
+    func trackState(block: @escaping (_ state: Task.State) -> Void) {
         self.trackStateBlock = block
     }
-    
-    func authentication(block: @escaping (URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition,URLCredential?)) {
+
+    func authentication(block: @escaping (URLAuthenticationChallenge) -> (URLSession.AuthChallengeDisposition, URLCredential?)) {
         self.authenticationHandler = block
     }
-    
+
     func progress(block: @escaping (Double) -> Void) {
         self.trackProgress = block
     }
 }
 
-
 extension Task {
-    var state :Task.State {
-        get {return self._state}
-        set {
-            if self._state != newValue {
-                self._state = newValue
-                self.trackStateBlock?(self._state)
-            }
-        }
-    }
-}
 
-extension Task {
-    
-    var request:URLRequest? {
-        
-        if let url = URL(string: self.urlString){
+    var request: URLRequest? {
+
+        if let url = URL(string: self.urlString) {
             var req = URLRequest(url: url, cachePolicy: URLRequest.CachePolicy.reloadIgnoringCacheData, timeoutInterval: self.timeout)
             if self.method != .none {
                 req.httpMethod = self.method.rawValue
@@ -371,38 +357,36 @@ extension Task {
                     req.setValue(value as? String, forHTTPHeaderField: key)
                 }
             }
-            
+
             // set body
             if self.requestBody != nil && JSONSerialization.isValidJSONObject(self.requestBody!) {
                 do {
                     req.httpBody = try JSONSerialization.data(withJSONObject: self.requestBody!, options: .prettyPrinted)
-                }
-                catch {
+                } catch {
                     print("HTTP request body error: \(error)")
                 }
             }
             return req
-            
+
         }
         return nil
     }
 }
-
 
 //-----------------------------------------------
 // Task: Enum for Task
 //-----------------------------------------------
 
 extension Task {
-    
+
     enum Method: String {
         case post = "POST", get = "GET", put = "PUT", head = "HEAD", delete="DELETE", connect = "CONNECT", option = "OPTIONS", trace = "TRACE", none = "NONE"
     }
-    
-    enum State :Int{
-        case pending = 1, shedule = 2, running = 3,success = 4, cancel = 5, failed = 6
+
+    enum State: Int {
+        case pending = 1, shedule = 2, running = 3, success = 4, cancel = 5, failed = 6
     }
-    
+
     enum StatusCode: Int {
         case success = 200, unknwon = -1, authChellenge = 91, authChellengeRetry = 90, requestNotFound = 101
     }
@@ -413,61 +397,60 @@ extension Task {
 //-----------------------------------------------
 
 internal extension Task {
-    
+
     struct Response {
-        
+
         let data: ResponseData?
         let urlResponse: HTTPURLResponse?
         let error: Error?
-        
-        
-        init(urlResponse res: URLResponse?, data d: Data) {
-            self.data = ResponseData(data: d)
+
+        init(urlResponse res: URLResponse?, data: Data?) {
+            self.data = ResponseData(data: data)
             self.urlResponse = res as? HTTPURLResponse
             self.error = nil
         }
-        
-        init(urlResponse res: URLResponse?, url u:URL) {
-            self.data = ResponseData(URL: u)
+
+        init(urlResponse res: URLResponse?, url: URL) {
+            self.data = ResponseData(URL: url)
             self.urlResponse = res as? HTTPURLResponse
             self.error = nil
         }
-        
-        init(urlResponse res: URLResponse?, error er: Error?) {
-            self.error = er
+
+        init(urlResponse res: URLResponse?, error: Error?) {
+            self.error = error
             self.urlResponse = res as? HTTPURLResponse
             self.data = nil
         }
-        
-        func data(_ block:(Data?) ->Void) {
+
+        func data(_ block: (Data?) -> Void) {
             self.data?.data(block)
         }
-        
+
     }
-    
+
     struct ResponseData {
-        
+
         private let _data: Data?
         private let _url: URL?
-        
-        init(data d: Data) {
-            self._data = d
+
+        init(data: Data?) {
+            self._data = data
             self._url = nil
         }
-        
-        init(URL url:URL) {
+
+        init(URL url: URL) {
             self._url = url
             self._data = nil
         }
-        
-        func json(_ block:(Any?) ->Void) {
-            
+
+        func json(_ block:(Any?) -> Void) {
+
             guard let data = self._data else {
                 block(nil)
                 return
             }
-            
-            do{
+
+            do {
                 let jsonObject = try JSONSerialization.jsonObject(with: data, options: .mutableContainers)
                 block(jsonObject)
             } catch {
@@ -475,18 +458,13 @@ internal extension Task {
                 block(nil)
             }
         }
-        
-        func downloadedURL(_ block:(URL?) -> Void) {
+
+        func downloadedURL(_ block: (URL?) -> Void) {
             block(self._url)
         }
-        
-        fileprivate func data(_ block:(Data?) ->Void) {
+
+        fileprivate func data(_ block: (Data?) -> Void) {
             block(self._data)
         }
     }
-    
-    
-    
 }
-
-

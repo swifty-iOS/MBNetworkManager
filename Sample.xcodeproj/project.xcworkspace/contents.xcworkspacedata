@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:MBNetworkManager.xcodeproj">
+      location = "self:/Users/Manish/Documents/Swift/Github/MBNetworkManager/Sample/Sample.xcodeproj">
    </FileRef>
 </Workspace>
