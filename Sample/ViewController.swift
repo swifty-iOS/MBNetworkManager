@@ -9,29 +9,28 @@
 import UIKit
 
 class ViewController: UIViewController {
-    
+
     @IBOutlet weak var progressView: UIProgressView!
     @IBOutlet weak var label: UILabel!
     @IBOutlet weak var activityView: UIActivityIndicatorView!
     override func viewDidLoad() {
         super.viewDidLoad()
     }
-    
+
     @IBAction func downloadTask(_ sender: UIButton) {
         self.dwnloadTask()
     }
     @IBAction func dataTask(_ sender: UIButton) {
         self.dataTask()
     }
-    
+
     func dataTask() {
         self.view.isUserInteractionEnabled = false
         self.progressView.progress = 0.0
         self.activityView.startAnimating()
         self.label.text = "Loading"
         let gTask = Task.sampleTask()
-        MBNetworkManager.shared.add(dataTask: gTask, completion: {
-            (task, error) in
+        MBNetworkManager.shared.add(dataTask: gTask, completion: { (task, error) in
             print(error ?? " ")
             DispatchQueue.main.async {
                 self.view.isUserInteractionEnabled = true
@@ -39,8 +38,8 @@ class ViewController: UIViewController {
                 self.label.text = "\(task.state)"
             }
         })
-        gTask.authentication { challenge in
-            return (.useCredential,nil)
+        gTask.authentication { _ in
+            return (.useCredential, nil)
         }
         gTask.trackState { state in
             DispatchQueue.main.async {
@@ -48,25 +47,24 @@ class ViewController: UIViewController {
             }
         }
     }
-    
+
     func dwnloadTask() {
         self.view.isUserInteractionEnabled = false
         self.progressView.progress = 0.0
         self.activityView.startAnimating()
         self.label.text = "Loading"
         let dTask = Task.samplePDF()
-        MBNetworkManager.shared.add(downloadTask: dTask, completion: {
-            (task, error) in
+        MBNetworkManager.shared.add(downloadTask: dTask, completion: { (task, error) in
             print(error ?? " ")
             DispatchQueue.main.async {
                 self.view.isUserInteractionEnabled = true
-                
+
                 self.activityView.stopAnimating()
                 self.label.text = "\(task.state)"
             }
         })
-        dTask.authentication { challenge in
-            return (.useCredential,nil)
+        dTask.authentication { _ in
+            return (.useCredential, nil)
         }
         dTask.trackState { state in
             DispatchQueue.main.async {
@@ -80,13 +78,10 @@ class ViewController: UIViewController {
         print(per)
         }
     }
-    
-    
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
-    
-}
 
+}
