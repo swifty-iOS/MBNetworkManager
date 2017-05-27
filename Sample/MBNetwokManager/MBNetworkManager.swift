@@ -9,6 +9,15 @@
 import Foundation
 import UIKit
 
+private func NetworkLog(_ message: String) {
+    #if DEBUG
+        print("MBNetworkManager--> \(message)")
+    #endif
+}
+
+typealias TaskCompletionCallBack = ((_ task: Task, _ error: Error?) -> Void)
+
+
 fileprivate struct NetworkConstant {
     static var OperationObserverKey: String { return "operations" }
     static var QueueName: String { return "DownloadQueue" }
@@ -75,7 +84,7 @@ class MBNetworkManager: NSObject {
 
 extension MBNetworkManager {
 
-    func add(downloadTask task: Task, completion:@escaping (Task, Error?) -> Void) {
+    func add(downloadTask task: Task, completion:@escaping TaskCompletionCallBack) {
         let op = ServiceTask.init(task, serviceType: .download, completion: completion)
         op.queuePriority = .high
         self.queue.addOperation(op)
@@ -87,7 +96,7 @@ extension MBNetworkManager {
             }.first as? ServiceTask)?.task
     }
 
-    func add( dataTask task: Task, completion:@escaping (Task, Error?) -> Void) {
+    func add( dataTask task: Task, completion:@escaping TaskCompletionCallBack) {
         let op = ServiceTask.init(task, serviceType: .data, completion: completion)
         op.queuePriority = .high
         self.queue.addOperation(op)
@@ -112,7 +121,7 @@ private class ServiceTask: Operation {
     }
 
     private var taskType: ServiceTaskType
-    fileprivate var completionHandler: ((Task, Error?) -> Void)?
+    fileprivate var completionHandler: TaskCompletionCallBack?
     fileprivate var session: URLSession!
     internal var task: Task
 
@@ -120,7 +129,7 @@ private class ServiceTask: Operation {
     internal var isFinishedLocal: Bool = false
     //internal var _isCancelled : Bool = false
 
-    init(_ task: Task, serviceType type: ServiceTaskType, completion:@escaping (Task, Error?) -> Void) {
+    init(_ task: Task, serviceType type: ServiceTaskType, completion:@escaping TaskCompletionCallBack) {
         self.task = task
         self.taskType = type
         self.completionHandler = completion
@@ -182,7 +191,7 @@ private class ServiceTask: Operation {
 
             let error = NSError.init(domain: "Bad response from server. Check httpStatusCode of Task", code: 12, userInfo: nil) as Error?
             self.task.response = Task.Response(urlResponse: response, error: error)
-            print("HTTP status should be 200. It is \(self.task.response?.urlResponse?.statusCode)")
+            NetworkLog("HTTP status should be 200. It is \(String(describing: self.task.response?.urlResponse?.statusCode))")
             self.updateState(.failed)
             return nil
         }
@@ -214,7 +223,7 @@ private class ServiceTask: Operation {
 extension ServiceTask: URLSessionDelegate {
 
     internal func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        print("Challenge received for task identifier: \(self.task.identifier)")
+        NetworkLog("Challenge received for task identifier: \(self.task.identifier)")
         switch challenge.protectionSpace.authenticationMethod {
 
         case NSURLAuthenticationMethodServerTrust:
@@ -363,7 +372,7 @@ extension Task {
                 do {
                     req.httpBody = try JSONSerialization.data(withJSONObject: self.requestBody!, options: .prettyPrinted)
                 } catch {
-                    print("HTTP request body error: \(error)")
+                    NetworkLog("HTTP request body error: \(error)")
                 }
             }
             return req
@@ -454,7 +463,7 @@ internal extension Task {
                 let jsonObject = try JSONSerialization.jsonObject(with: data, options: .mutableContainers)
                 block(jsonObject)
             } catch {
-                print("Json Eror \(error)")
+                NetworkLog("Json Eror \(error)")
                 block(nil)
             }
         }
